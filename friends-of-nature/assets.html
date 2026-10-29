@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friends of Nature: картинки</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html" style="text-decoration:none"><img src="assets/logo-mark.png" alt=""><b>Friends of Nature</b></a>
+  <div class="lang"><button id="lru">RU</button><button id="len">EN</button></div>
+</header>
+<main id="app"></main>
+<script src="js/i18n.js"></script>
+<script src="js/manifest.js"></script>
+<script src="js/games-core.js"></script>
+<script src="js/pics.js"></script>
+<script>
+(function () {
+  const h = FON.h, T = FON.T, app = document.getElementById("app");
+  let onlyMissing = false;
+  document.getElementById("lru").onclick = () => { FON.lang = "ru"; try { localStorage.setItem("fon_lang", "ru"); } catch (e) {} draw(); };
+  document.getElementById("len").onclick = () => { FON.lang = "en"; try { localStorage.setItem("fon_lang", "en"); } catch (e) {} draw(); };
+  const copy = (btn, text) => { try { navigator.clipboard.writeText(text); const o = btn.textContent; btn.textContent = T("Скопировано", "Copied"); setTimeout(() => btn.textContent = o, 1200); } catch (e) {} };
+  const pinterestUrl = (sec, item) => {
+    const ratio = sec.kind === "scene" ? sec.ratio : "square 1:1";
+    return "https://www.pinterest.com/search/pins/?q=" + encodeURIComponent(item[3] + " children's picture book gouache illustration " + ratio + " no watermark public domain CC0");
+  };
+  async function draw() {
+    document.getElementById("lru").className = FON.lang === "ru" ? "on" : ""; document.getElementById("len").className = FON.lang === "en" ? "on" : "";
+    const keys = FON.allKeys(); await FON.preload(keys); const have = k => !!FON.imgOk(k), done = keys.filter(have).length;
+    app.innerHTML = "";
+    const bar = h("i"); bar.style.width = done / keys.length * 100 + "%";
+    app.append(h("h2", null, T("Картинки для сайта", "Images for the site")),
+      h("p", { class: "sub" }, T("Положи файлы в папку assets/img/ с именем из колонки «Файл» (png, jpg или webp), обнови страницу, и картинка появится в игре. Пока файла нет, на сайте показывается цветная заглушка с подписью.", "Put files into assets/img/ using the name in the File column (png, jpg or webp) and reload. Until a file exists, the site shows a coloured placeholder.")),
+      h("p", { style: { fontWeight: 800, margin: "0 0 6px" } }, T("Готово: ", "Done: ") + done + " / " + keys.length), h("div", { class: "aprog" }, bar),
+      h("label", { style: { display: "inline-flex", gap: "8px", margin: "14px 0 0", fontWeight: 700, cursor: "pointer" } }, h("input", { type: "checkbox", ...(onlyMissing ? { checked: "" } : {}), onchange: e => { onlyMissing = e.target.checked; draw(); } }), T("Показывать только недостающие", "Show missing only")));
+    FON.MANIFEST.forEach(sec => {
+      const items = sec.items.filter(i => !onlyMissing || !have(i[0])); if (!items.length) return;
+      const all = sec.items.map(i => FON.promptFor(sec, i)).join("\n\n");
+      app.append(h("div", { class: "asec" }, h("h2", null, T(sec.title[0], sec.title[1])), h("span", { class: "tag" }, sec.kind === "scene" ? T("сцена ", "scene ") + (sec.ratio || "") : T("предмет 1:1", "item 1:1")), h("span", { class: "tag" }, T("важность ", "priority ") + sec.prio),
+        h("button", { class: "btn alt sm", onclick: e => copy(e.target, all) }, T("Скопировать все промпты", "Copy all prompts"))));
+      if (sec.note) app.append(h("p", { class: "sub", style: { margin: "0 0 10px" } }, T(sec.note[0], sec.note[1])));
+      app.append(h("div", { class: "alist" }, items.map(i => {
+        const p = FON.promptFor(sec, i);
+        return h("div", { class: "arow" + (have(i[0]) ? " ok" : "") }, h("div", { class: "pv" }, FON.pic(i[0], { label: T(i[1], i[2]) })),
+          h("div", null, h("b", null, T(i[1], i[2])), " ", h("code", null, FON.fileName(i[0]) + ".png"), h("p", null, p)),
+          h("div", { class: "asset-actions" },
+            h("button", { class: "btn alt sm", onclick: e => copy(e.target, p) }, T("Копировать промпт", "Copy prompt")),
+            h("a", { class: "btn sm pin-link", href: pinterestUrl(sec, i), target: "_blank", rel: "noopener noreferrer" }, T("Найти в Pinterest", "Find on Pinterest"))));
+      })));
+    });
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

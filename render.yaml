@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: friends-of-nature
+    runtime: node
+    plan: free
+    rootDir: friends-of-nature
+    buildCommand: echo "No build step required"
+    startCommand: node server/server.js
+    autoDeployTrigger: commit
