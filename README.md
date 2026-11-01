@@ -5,7 +5,6 @@
 ## Запуск
 
 ```bash
-cd "/Users/meruertarystangalieva/Desktop/Friends of Nature"
 npm install
 npm run dev
 ```
